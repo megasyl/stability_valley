@@ -9,9 +9,9 @@ export default class Nuclei {
         this.symbol = data.atomicSymbol;
 
         // Mc²/ A - http://www.laradioactivite.com/site/pages/lavalleedestabilite.htm
-        //this.stability = (this.mass * Math.pow(constants.CELERITY, 2)) / this.massNumber;
+        this.stability = (this.mass * Math.pow(constants.CELERITY, 2)) / this.massNumber;
 
-        this.stability = this.relativeAtomicMass / this.massNumber;
+        //this.stability = this.relativeAtomicMass / this.massNumber;
 
     }
 }

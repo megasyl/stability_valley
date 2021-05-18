@@ -19,12 +19,6 @@ module.exports = {
 					path.resolve(__dirname, 'src')
 				],
 				loader: 'babel-loader',
-				query: {
-					compact: true,
-					presets: [
-						['es2015', {modules: false}]
-					]
-				}
 			}
 		]
 	}

@@ -12,6 +12,10 @@ import {
     BoxGeometry,
     AmbientLight,
     PointLight,
+    EdgesGeometry,
+    LineBasicMaterial,
+    LineSegments,
+    Color,
 
 } from 'three';
 const OrbitControls = require('three-orbitcontrols')
@@ -21,8 +25,15 @@ console.log(nistData);
 import Nuclei from "./class/nuclei";
 
 export default class App {
+
+
     constructor() {
         this.nucleis = nistData.map(nucleiInfo => new Nuclei(nucleiInfo));
+        this.min = Infinity;
+        this.max = 0;
+        this.nucleis.forEach(nuclei => this.min = this.min > nuclei.stability ? nuclei.stability : this.min);
+        this.nucleis.forEach(nuclei => this.max = this.max < nuclei.stability ? nuclei.stability : this.max);
+        console.log('MINI', this.min, 'MAXI', this.max)
         console.log("Hydrogen", this.nucleis.filter(i => i.symbol === "H"));
         console.log("Carbon", this.nucleis.filter(i => i.symbol === "C"));
         this.scene = new Scene();
@@ -32,8 +43,18 @@ export default class App {
         this.initialize();
     }
 
+    rgbToHex([r, g, b]) {
+        return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    }
 
-
+    colorGradient(color1, color2, gradient) {
+        var w1 = gradient;
+        var w2 = 1 - w1;
+        var rgb = [Math.round(color1[0] * w1 + color2[0] * w2),
+            Math.round(color1[1] * w1 + color2[1] * w2),
+            Math.round(color1[2] * w1 + color2[2] * w2)];
+        return this.rgbToHex(rgb);
+    }
     initialize() {
         // Configure camera settings
         this.camera = new PerspectiveCamera(50, this.width / this.height, 0.1, 1000);
@@ -42,7 +63,7 @@ export default class App {
 
         const ALight = new AmbientLight(0xFFFFFF, 0.5);
         const pLight = new PointLight(0xFFFFFF, 0.5);
-        pLight.position.set( 0, 0, 50 );
+        pLight.position.set( 25, 50, 25 );
         this.scene.add(ALight);
         this.scene.add(pLight);
 
@@ -71,16 +92,24 @@ export default class App {
 
 
         this.nucleis.forEach(n => {
-            const geo = new BoxGeometry(1,1,1/n.stability)
+            const height = (n.stability - this.min) / (this.max - this.min) * 10
+
+            const geo = new BoxGeometry(1, height,1)
             const mat = new MeshLambertMaterial({
-                color: 0xF2FFEC,
+                color: this.colorGradient([255,0,0], [0,255,0], height / 10),
                 //emissive: 0xFF0000,//Math.floor(Math.random() * Math.floor(Math.pow(2, 24))) },
             });
             const cube = new Mesh( geo, mat );
             cube.position.x = n.protons//(n.protons) - 1/2;
-            cube.position.y = n.neutrons//(-1*n.neutrons) -1/2;
-            console.log(`${n.symbol}(${n.protons},${n.neutrons})${1/Math.pow(n.stability,2)}`)
-            //cube.position.z +=  cube.geometry.parameters.height/2;
+            cube.position.z = n.neutrons//(-1*n.neutrons) -1/2;
+            cube.position.y += height / 2
+
+            var sgeo = new EdgesGeometry( cube.geometry );
+            var smat = new LineBasicMaterial( { color: new Color(69,69,69), linewidth: 1 } );
+            var wireframe = new LineSegments( sgeo, smat );
+            //cube.add( wireframe )
+            wireframe.renderOrder = 1; // make sure wireframes are rendered 2nd
+
             this.scene.add(cube)
         });
         this.renderer.render(this.scene, this.camera);
